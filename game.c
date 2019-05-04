@@ -11,70 +11,50 @@
  * 		4. Any dead cell with exactly three live neighbours becomes a live cell, as if by reproduction.
  */
 
+/// Define valid cell states
 typedef enum {
 	CellState_dead,
 	CellState_alive,
 } CellState;
 
+/// Defined @c Coord struct to define point coordinate; currenly 2d (x,y)
 typedef struct {
 	uint16_t x;
 	uint16_t y;
 } Coord;
 
-typedef uint16_t ** Grid;
-
 #define LOG(x) printf(x)
 //#define LOG(x)
 
-// //// Tests for Cell in CellState_alive
-// /**
-//  * Rule 1: Any live cell with fewer than two live neighbours dies, as if caused by under-population.
-//  * @param grid
-//  * @param point
-//  * @return Returns @c CellState, whether cell continues to live or dies.
-//  */
-// CellState underPopulation(char ** grid, Coord * point) {
-// 	return Result_live;
-// }
-
-// /**
-//  * Rule 2: Any live cell with two or three live neighbours lives on to the next generation.
-//  * @param grid
-//  * @param point
-//  * @return Returns @c CellState, whether cell continues to live or dies.
-//  */
-// CellState canContinueLiving(char ** grid, Coord * point) {
-// 	return Result_live;
-// }
-
-// *
-//  * Rule 3: Any live cell with more than three live neighbours dies, as if by overcrowding.
-//  * @param grid
-//  * @param point
-//  * @return Returns @c CellState, whether cell continues to live or dies.
- 
-// CellState overCrowding(char ** grid, Coord * point) {
-// 	return Result_live;
-// }
-
-// //// Tests for Cell in CellState_dead
-// /**
-//  * Rule 4: Any dead cell with exactly three live neighbours becomes a live cell, as if by reproduction.
-//  *
-//  */
-// CellState reproduce(char ** grid, Coord * point) {
-// 	return Result_live;
-// }
-
-CellState getCellState(uint16_t * g, uint16_t size, uint16_t x, uint16_t y) {
+/**
+ * Retreive the @c CellState encoding for a particular coordinate.
+ *
+ * @param g The Cell Game Grid, flattened 2d array
+ * @param size Size of game, specifying equal length and width grid
+ * @param cell The Cell at @c Coord to retreive state for.
+ * @return Return @c CellState encoding for a particular coordinate.
+ */
+CellState getCellState(uint16_t * g, uint16_t size, Coord * cell) {
 	uint16_t (*grid)[size] = (uint16_t (*)[size]) g;
-	return (grid[x][y] == 1) ? CellState_alive : CellState_dead;
+	return (grid[cell->x][cell->y] == 1) ? CellState_alive : CellState_dead;
 }
 
-uint16_t getNeighborLiveCount(uint16_t * g, uint16_t size, uint16_t x, uint16_t y) {
+/**
+ * Calculate the number of neighbors of a Cell that are alive. Checks up/down,
+ * left/right, and across diagonals.
+ *
+ * @param g The Cell Game Grid, flattened 2d array
+ * @param size Size of game, specifying equal length and width grid
+ * @return Return live neighbor count of a Cell at @c Coord @p cell.
+ */
+uint16_t getNeighborLiveCount(uint16_t * g, uint16_t size, Coord * cell) {
 	uint16_t (*grid)[size] = (uint16_t (*)[size]) g;
 	uint16_t liveCount = 0;
+	uint16_t x = cell->x;
+	uint16_t y = cell->y;
 	
+	// Check x-axis, left/right
+	// grid[x+/-1][y]
 	if (x == 0) {
 		liveCount += grid[x+1][y];
 	} else if (x == size-1) {
@@ -83,6 +63,9 @@ uint16_t getNeighborLiveCount(uint16_t * g, uint16_t size, uint16_t x, uint16_t 
 		liveCount += grid[x+1][y];
 		liveCount += grid[x-1][y];
 	}
+	
+	// Check y-axis, up/down
+	// grid[x][y+/-1]
 	if (y == 0) {
 		liveCount += grid[x][y+1];
 	} else if (y == size-1) {
@@ -91,27 +74,46 @@ uint16_t getNeighborLiveCount(uint16_t * g, uint16_t size, uint16_t x, uint16_t 
 		liveCount += grid[x][y+1];
 		liveCount += grid[x][y-1];
 	}
+
+	// Check diagonals
+	// upper left corner
 	if (x == 0 && y == 0) {
 		liveCount += grid[x+1][y+1];
-	} else if (x == 0 && y == size - 1) {
+	} 
+	// lower left corner
+	else if (x == 0 && y == size - 1) {
 		liveCount += grid[x+1][y-1];
-	} else if (x == size -1 && y == 0) {
+	}
+	// upper right corner
+	else if (x == size -1 && y == 0) {
 		liveCount += grid[x-1][y+1];
-	} else if (x == size -1 && y == size - 1) {
+	}
+	// lower right corner
+	else if (x == size -1 && y == size - 1) {
 		liveCount += grid[x-1][y-1];
-	} else if (x == 0) {
+	}
+	// left edge (no diags on left)
+	else if (x == 0) {
 		liveCount += grid[x+1][y-1];
 		liveCount += grid[x+1][y+1];
-	} else if (x == size - 1) {
+	} 
+	// right edge (no diags on right)
+	else if (x == size - 1) {
 		liveCount += grid[x-1][y-1];
 		liveCount += grid[x-1][y+1];
-	} else if (y == 0) {
+	} 
+	// top edge (no diags above)
+	else if (y == 0) {
 		liveCount += grid[x-1][y+1];
 		liveCount += grid[x+1][y+1];
-	} else if (y == size - 1) {
+	}
+	// bottom edge (no diags below)
+	else if (y == size - 1) {
 		liveCount += grid[x-1][y-1];
 		liveCount += grid[x+1][y-1];
-	} else {
+	}
+	// no edge or corner, get all diags
+	else {
 		liveCount += grid[x-1][y-1];
 		liveCount += grid[x-1][y+1];
 		liveCount += grid[x+1][y-1];
@@ -121,28 +123,19 @@ uint16_t getNeighborLiveCount(uint16_t * g, uint16_t size, uint16_t x, uint16_t 
 	return liveCount;
 }
 
-// CellState processCellStateAlive(char ** grid, Coord * point) {
-// 	return Result_live;
-// }
-
-// CellState processCellStateDead(char ** grid, Coord * point) {
-// 	return Result_live;
-// }
-
-CellState processCell(uint16_t * g, uint16_t size, Coord * point) {
-	CellState cellState = getCellState(g, size, point->x, point->y);
+/**
+ * Calculate new @c CellState for a Cell at @c Coord @p cell
+ *
+ * @param g The Cell Game Grid, flattened 2d array
+ * @param size Size of game, specifying equal length and width grid
+ * @param cell The Cell at @c Coord to udpate state for.
+ * @return Return @c CellState encoding for a particular coordinate.
+ */
+CellState processCell(uint16_t * g, uint16_t size, Coord * cell) {
+	CellState cellState = getCellState(g, size, cell);
 	CellState newCellState = cellState;
 
-	// printf("\n\t(%d,%d) is", point->x, point->y);
-	// if (cellState == CellState_alive) {
-	// 	printf(" alive, ");
-	// } else {
-	// 	printf(" dead, ");
-	// }
-	
-
-	uint16_t neighborLiveCount = getNeighborLiveCount(g, size, point->x, point->y);
-	// printf("\n\t(%d,%d) neighborLiveCount = %d", point->x, point->y, neighborLiveCount);	
+	uint16_t neighborLiveCount = getNeighborLiveCount(g, size, cell);
 
 	switch (cellState) {
 		case CellState_alive: {
@@ -160,47 +153,27 @@ CellState processCell(uint16_t * g, uint16_t size, Coord * point) {
 			break;
 		}
 	}
-	// printf("\n\t(%d,%d) is now ", point->x, point->y);
-	// if (newCellState == CellState_alive) {
-	// 	printf(" alive, ");
-	// } else {
-	// 	printf(" dead, ");
-	// }
-	// printf("\n");
 	return newCellState;
-
-	// if (Result_die == underPopulation(grid, point)) {
-	// 	return Result_die;
-	// }
-	// if (Result_die == overCrowding(grid, point)) {
-	// 	return Result_die;
-	// }
-	// if (Result_die == underPopulation(grid, point)) {
-	// 	return Result_die;
-	// }
 }
 
 /**
- * Main entry point
+ * Plays one round of the game, iterating over each cell of the grid.
  * 
- * @param grid Square grid - array of arrays with its values either 0 or 1 (0 means dead, 1 means alive)
+ * @param src Square grid - array of arrays with its values either 0 or 1 (0 means dead, 1 means alive)
+ * @param dst Square grid - array of arrays with its values either 0 or 1 (0 means dead, 1 means alive)
  * @param size Size of grid
- * @param iterations Number of iterations
  */
-void gameEntry(uint16_t * g, uint16_t * newg, uint16_t size, uint16_t iterations) {
+void gameRound(uint16_t * src, uint16_t * dst, uint16_t size) {
 	int i, j;
 	// LOG("\nPrint table");
-	uint16_t (*grid)[size] = (uint16_t (*)[size]) g;
-	uint16_t (*newgrid)[size] = (uint16_t (*)[size]) newg;
-	Coord coord;
+	uint16_t (*grid)[size] = (uint16_t (*)[size]) src;
+	uint16_t (*newgrid)[size] = (uint16_t (*)[size]) dst;
+	Coord cell;
 	for (i = 0; i < size; i++) {
-		// printf("\n");
 		for (j = 0; j < size; j++) {
-			// printf("%d", grid[i][j]);
-			// printf("%d ", grid[i][j]);
-			coord.x = i;
-			coord.y = j;
-			newgrid[i][j] = processCell(g, size, &coord);
+			cell.x = i;
+			cell.y = j;
+			newgrid[i][j] = processCell(src, size, &cell);
 		}
 	}
 }
@@ -213,6 +186,29 @@ void printGameGrid(uint16_t * g, uint16_t size) {
 		for (j = 0; j < size; j++) {
 			printf("%d ", grid[i][j]);
 		}
+	}
+}
+
+/**
+ * Main entry point
+ * 
+ * @param grid Square grid - array of arrays with its values either 0 or 1 (0 means dead, 1 means alive)
+ * @param size Size of grid
+ * @param iterations Number of iterations
+ */
+void playGame(uint16_t * ping, uint16_t * pong, uint16_t size, uint16_t iterations) {
+	uint16_t *src, *dst, *tmp;
+	src = ping;
+	dst = pong;
+	int i;
+	for (i = 0; i < iterations; i++) {
+		memset(dst, 0, size*size*sizeof(uint16_t));
+		gameRound(src, dst, size);
+		printf("\n\nAfter round %d", i+1);
+		printGameGrid(dst, size);
+		tmp = src;
+		src = dst;
+		dst = tmp;
 	}
 }
 
@@ -241,78 +237,23 @@ int main(int argc, char ** argv) {
 		printf("\nEg ./a.out tc_1 2");
 		return 0;
 	}
-	//memset(emptyGrid, 0, sizeof(emptyGrid));
 	printf("\nParsing game in file: %s", argv[1]);
 	numIterations = atoi(argv[2]);
 
 	FILE *f = fopen(argv[1], "r");
 	fscanf (f, "%hd", &sz);    
 	printf ("\nBuild table of size %d x %d ", sz, sz);
-	// uint16_t **buff_0 = (uint16_t**)malloc(sizeof(uint16_t*)*sz);
-	// uint16_t **buff_1 = (uint16_t**)malloc(sizeof(uint16_t*)*sz);
-	uint16_t *buff_x = (uint16_t*)malloc(sizeof(uint16_t)*sz*sz);
 	uint16_t *buff_0 = (uint16_t*)malloc(sizeof(uint16_t)*sz*sz);
 	uint16_t *buff_1 = (uint16_t*)malloc(sizeof(uint16_t)*sz*sz);
 	for (i = 0; i < sz; i++) {
 		printf("\n");
-		// buff_0[i] = (uint16_t*)malloc(sizeof(uint16_t)*sz);
-		// buff_1[i] = (uint16_t*)malloc(sizeof(uint16_t)*sz);
 		for (j = 0; j < sz; j++) {
-			// fscanf (f, "%hd", &buff_0[i][j]);
 			fscanf (f, "%hd", &buff_0[i*sz + j]);
-			// printf("%d ", buff_0[i][j]);
 			printf("%d ", buff_0[i*sz + j]);
 		}
-	}
-	// printf ("\nsizeof(buff_0) = %lu", sizeof(buff_0));
-	// printf ("\nsizeof(testGrid_1) = %lu", sizeof(testGrid_1));
-	// printf ("\nsizeof(buff_0[0]) = %lu", sizeof(buff_0[0]));
-	// printf ("\nsizeof(testGrid_1[0]) = %lu", sizeof(buff_0[0]));
-	// printf ("\naddr buff_0[0][0]) = %p", &buff_0[0][0]);
-	// printf ("\naddr buff_0[sz-1][sz-1]) = %p", &buff_0[sz-1][sz-1]);
-	// printf ("\naddr testGrid_1[0][0]) = %p", &testGrid_1[0][0]);
-	// printf ("\naddr testGrid_1[sz-1][sz-1]) = %p", &testGrid_1[TEST_GRID_SIZE_1-1][TEST_GRID_SIZE_1-1]);
-	// printf("\n[i,j]\tbuff_0\testGrid_1\tbuff_x");
-	// for (i = 0; i < sz; i++) {
-	// 	for (j = 0; j < sz; j++) {
-	// 		printf("\n[%d][%d]\t%p ", i, j, &buff_0[i][j]);
-	// 		printf("\t%p ", &testGrid_1[i][j]);
-	// 		printf("\t%p ", &buff_x[i*sz +j]);
-	// 	}
-	// }
-	// printf("\nlen(buff_0) = %ld", &buff_0[sz-1][sz-1] - &buff_0[0][0]);
-	// printf("\nlen(buff_0 row) = %ld", &buff_0[0][sz-1] - &buff_0[0][0]);
-	// printf("\nlen(buff_0 col) = %ld", &buff_0[1][0] - &buff_0[0][0]);
-	// printf("\nlen(testGrid_1 row) = %ld", &testGrid_1[0][sz-1] - &testGrid_1[0][0]);
-	// printf("\nlen(testGrid_1 col) = %ld", &testGrid_1[1][0] - &testGrid_1[0][0]);
-	// printf("\nlen(testGrid_1) = %ld", &testGrid_1[sz-1][sz-1] - &testGrid_1[0][0]);
-	// printf("\nlen(buff_0) = %ld", &buff_0[sz*sz-1] - &buff_0[0]);
-
-	printf("\n-----1--------------\n");
-	printGameGrid(buff_0, sz);
-	printf("\n-----2--------------\n");
-	memset(buff_1, 0, sizeof(uint16_t)*sz*sz);
-
-	printGameGrid(buff_1, sz);
-	printf("\n-------------------\n");
-	// while (!feof (f))
-	// {  
-	//   printf ("%d ", i);
-	//   fscanf (f, "%d", &i);      
-	// }
+	}	
 	fclose (f); 
-
-
-	LOG("\nPrint table");
-	//char * 
 	
-	printGameGrid(testGrid_1[0], TEST_GRID_SIZE_1);
-	// for (i = 0; i < TEST_GRID_SIZE_1; i++) {
-	// 	printf("\n");
-	// 	for (j = 0; j < TEST_GRID_SIZE_1; j++) {
-	// 		printf("%d ", testGrid_1[i][j]);
-	// 	}
-	// }
 	printf("\n\nInitial grid");
 	printGameGrid(buff_0, sz);
 
@@ -320,32 +261,17 @@ int main(int argc, char ** argv) {
 
 	uint16_t *src, *dst, *tmp;
 	src = buff_0;
-	dst = buff_1; 
-	for (i = 0; i < numIterations; i++) {
-		gameEntry(src, dst, sz, 1);
-		printf("\n\nAfter round %d", i+1);
-		printGameGrid(dst, sz);
-		tmp = src;
-		src = dst;
-		dst = tmp;
-		memset(dst, 0, sz*sz*sizeof(uint16_t));
-	}
-	// gameEntry(buff_0, buff_1, sz, 1);
-	// printf("\n\nAfter one round");
-	// printGameGrid(buff_1, sz);
-
-	// memset(buff_0, 0, sz*sz*sizeof(uint16_t));
-	// // gameEntry(emptyGrid[0], testGrid_1[0], TEST_GRID_SIZE_1, 1);
-	// gameEntry(buff_1, buff_0, sz, 1);
-	// printf("\n\nAfter second round");
-	// // printGameGrid(testGrid_1[0], TEST_GRID_SIZE_1);
-	// printGameGrid(buff_0, sz);
-	// // for (i = 0; i < TEST_GRID_SIZE_1; i++) {
-	// // 	printf("\n");
-	// // 	for (j = 0; j < TEST_GRID_SIZE_1; j++) {
-	// // 		printf("%d ", testGrid_1[i][j]);
-	// // 	}
-	// // }
+	dst = buff_1;
+	playGame(buff_0, buff_1, sz, numIterations);
+	// for (i = 0; i < numIterations; i++) {
+	// 	memset(dst, 0, sz*sz*sizeof(uint16_t));
+	// 	gameEntry(src, dst, sz, 1);
+	// 	printf("\n\nAfter round %d", i+1);
+	// 	printGameGrid(dst, sz);
+	// 	tmp = src;
+	// 	src = dst;
+	// 	dst = tmp;
+	// }
 
 	free(buff_0);
 	free(buff_1);
