@@ -233,12 +233,21 @@ int main(int argc, char ** argv) {
 	LOG("\nWelcome to the Game of Life!");
 	LOG("\n\n");
 	int i, j;
-	uint16_t sz;
+	uint16_t sz, numIterations;
+
+	printf("argc = %d", argc);
+	if (argc < 3) {
+		printf("\nRun program in this format: ./a.out test_file num_iterations");
+		printf("\nEg ./a.out tc_1 2");
+		return 0;
+	}
 	//memset(emptyGrid, 0, sizeof(emptyGrid));
+	printf("\nParsing game in file: %s", argv[1]);
+	numIterations = atoi(argv[2]);
 
 	FILE *f = fopen(argv[1], "r");
 	fscanf (f, "%hd", &sz);    
-	printf ("size = %d, build table ", sz);
+	printf ("\nBuild table of size %d x %d ", sz, sz);
 	// uint16_t **buff_0 = (uint16_t**)malloc(sizeof(uint16_t*)*sz);
 	// uint16_t **buff_1 = (uint16_t**)malloc(sizeof(uint16_t*)*sz);
 	uint16_t *buff_x = (uint16_t*)malloc(sizeof(uint16_t)*sz*sz);
@@ -304,31 +313,42 @@ int main(int argc, char ** argv) {
 	// 		printf("%d ", testGrid_1[i][j]);
 	// 	}
 	// }
-
-	gameEntry(buff_0, buff_1, sz, 1);
-	// gameEntry(testGrid_1[0], emptyGrid[0], TEST_GRID_SIZE_1, 1);
-	printf("\nAfter one round\n");
-	// printGameGrid(emptyGrid[0], TEST_GRID_SIZE_1);
-	printGameGrid(buff_1, sz);
-	// for (i = 0; i < TEST_GRID_SIZE_1; i++) {
-	// 	printf("\n");
-	// 	for (j = 0; j < TEST_GRID_SIZE_1; j++) {
-	// 		printf("%d ", emptyGrid[i][j]);
-	// 	}
-	// }
-	// memset(testGrid_1, 0, sizeof(testGrid_1));
-	memset(buff_0, 0, sz*sz*sizeof(uint16_t));
-	// gameEntry(emptyGrid[0], testGrid_1[0], TEST_GRID_SIZE_1, 1);
-	gameEntry(buff_1, buff_0, sz, 1);
-	printf("\nAfter second round\n");
-	// printGameGrid(testGrid_1[0], TEST_GRID_SIZE_1);
+	printf("\n\nInitial grid");
 	printGameGrid(buff_0, sz);
-	// for (i = 0; i < TEST_GRID_SIZE_1; i++) {
-	// 	printf("\n");
-	// 	for (j = 0; j < TEST_GRID_SIZE_1; j++) {
-	// 		printf("%d ", testGrid_1[i][j]);
-	// 	}
-	// }
+
+	printf("\n\nWill run game for %d iterations.", numIterations);
+
+	uint16_t *src, *dst, *tmp;
+	src = buff_0;
+	dst = buff_1; 
+	for (i = 0; i < numIterations; i++) {
+		gameEntry(src, dst, sz, 1);
+		printf("\n\nAfter round %d", i+1);
+		printGameGrid(dst, sz);
+		tmp = src;
+		src = dst;
+		dst = tmp;
+		memset(dst, 0, sz*sz*sizeof(uint16_t));
+	}
+	// gameEntry(buff_0, buff_1, sz, 1);
+	// printf("\n\nAfter one round");
+	// printGameGrid(buff_1, sz);
+
+	// memset(buff_0, 0, sz*sz*sizeof(uint16_t));
+	// // gameEntry(emptyGrid[0], testGrid_1[0], TEST_GRID_SIZE_1, 1);
+	// gameEntry(buff_1, buff_0, sz, 1);
+	// printf("\n\nAfter second round");
+	// // printGameGrid(testGrid_1[0], TEST_GRID_SIZE_1);
+	// printGameGrid(buff_0, sz);
+	// // for (i = 0; i < TEST_GRID_SIZE_1; i++) {
+	// // 	printf("\n");
+	// // 	for (j = 0; j < TEST_GRID_SIZE_1; j++) {
+	// // 		printf("%d ", testGrid_1[i][j]);
+	// // 	}
+	// // }
+
+	free(buff_0);
+	free(buff_1);
 
 	LOG("\n\n");
 }
