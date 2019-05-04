@@ -2,7 +2,9 @@
 
 # To Build and Run
 gcc game.c -o game
+
 gcc tester.c -o tester
+
 ./tester
 
 # Caveats
