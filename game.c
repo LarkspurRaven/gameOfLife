@@ -26,6 +26,21 @@ typedef struct {
 #define LOG(x) printf(x)
 //#define LOG(x)
 
+static uint16_t *buff_0;
+static uint16_t *buff_1;
+
+struct GameOps {
+	CellState (*getCellState)(uint16_t * g, uint16_t size, Coord * cell);
+	uint16_t (*getNeighborLiveCount)(uint16_t * g, uint16_t size, Coord * cell);
+	void (*playGame)(uint16_t * ping, uint16_t * pong, uint16_t size, uint16_t iterations);
+	void (*printGameGrid)(uint16_t * g, uint16_t size);
+	void (*gameRound)(uint16_t * src, uint16_t * dst, uint16_t size);
+	CellState (*processCell)(uint16_t * g, uint16_t size, Coord * cell);
+	int (*parseFile)(char * file, uint16_t * psz);
+};
+
+struct GameOps * pGameOps;
+
 /**
  * Retreive the @c CellState encoding for a particular coordinate.
  *
@@ -34,7 +49,7 @@ typedef struct {
  * @param cell The Cell at @c Coord to retreive state for.
  * @return Return @c CellState encoding for a particular coordinate.
  */
-CellState getCellState(uint16_t * g, uint16_t size, Coord * cell) {
+CellState getCellState_Large(uint16_t * g, uint16_t size, Coord * cell) {
 	uint16_t (*grid)[size] = (uint16_t (*)[size]) g;
 	return (grid[cell->x][cell->y] == 1) ? CellState_alive : CellState_dead;
 }
@@ -47,7 +62,7 @@ CellState getCellState(uint16_t * g, uint16_t size, Coord * cell) {
  * @param size Size of game, specifying equal length and width grid
  * @return Return live neighbor count of a Cell at @c Coord @p cell.
  */
-uint16_t getNeighborLiveCount(uint16_t * g, uint16_t size, Coord * cell) {
+uint16_t getNeighborLiveCount_Large(uint16_t * g, uint16_t size, Coord * cell) {
 	uint16_t (*grid)[size] = (uint16_t (*)[size]) g;
 	uint16_t liveCount = 0;
 	uint16_t x = cell->x;
@@ -131,11 +146,11 @@ uint16_t getNeighborLiveCount(uint16_t * g, uint16_t size, Coord * cell) {
  * @param cell The Cell at @c Coord to udpate state for.
  * @return Return @c CellState encoding for a particular coordinate.
  */
-CellState processCell(uint16_t * g, uint16_t size, Coord * cell) {
-	CellState cellState = getCellState(g, size, cell);
+CellState processCell_Large(uint16_t * g, uint16_t size, Coord * cell) {
+	CellState cellState = pGameOps->getCellState(g, size, cell);
 	CellState newCellState = cellState;
 
-	uint16_t neighborLiveCount = getNeighborLiveCount(g, size, cell);
+	uint16_t neighborLiveCount = pGameOps->getNeighborLiveCount(g, size, cell);
 
 	switch (cellState) {
 		case CellState_alive: {
@@ -164,7 +179,7 @@ CellState processCell(uint16_t * g, uint16_t size, Coord * cell) {
  * @param dst New grid state will be stored here after the round is completed.
  * @param size Size of grid
  */
-void gameRound(uint16_t * src, uint16_t * dst, uint16_t size) {
+void gameRound_Large(uint16_t * src, uint16_t * dst, uint16_t size) {
 	int i, j;
 	// LOG("\nPrint table");
 	uint16_t (*grid)[size] = (uint16_t (*)[size]) src;
@@ -174,12 +189,13 @@ void gameRound(uint16_t * src, uint16_t * dst, uint16_t size) {
 		for (j = 0; j < size; j++) {
 			cell.x = i;
 			cell.y = j;
-			newgrid[i][j] = processCell(src, size, &cell);
+			newgrid[i][j] = pGameOps->processCell(src, size, &cell);
 		}
 	}
 }
 
-void printGameGrid(uint16_t * g, uint16_t size) {
+void printGameGrid_Large(uint16_t * g, uint16_t size) {
+	printf("\nparseFile, size=%d", size);
 	uint16_t (*grid)[size] = (uint16_t (*)[size]) g;
 	int i, j;
 	for (i = 0; i < size; i++) {
@@ -198,16 +214,16 @@ void printGameGrid(uint16_t * g, uint16_t size) {
  * @param size Size of grid
  * @param iterations Number of iterations
  */
-void playGame(uint16_t * ping, uint16_t * pong, uint16_t size, uint16_t iterations) {
+void playGame_Large(uint16_t * ping, uint16_t * pong, uint16_t size, uint16_t iterations) {
 	uint16_t *src, *dst, *tmp;
 	src = ping;
 	dst = pong;
 	int i;
 	for (i = 0; i < iterations; i++) {
 		memset(dst, 0, size*size*sizeof(uint16_t));
-		gameRound(src, dst, size);
+		pGameOps->gameRound(src, dst, size);
 		printf("\n\nAfter round %d", i+1);
-		printGameGrid(dst, size);
+		pGameOps->printGameGrid(dst, size);
 		tmp = src;
 		src = dst;
 		dst = tmp;
@@ -224,32 +240,23 @@ uint16_t testGrid_1 [TEST_GRID_SIZE_1][TEST_GRID_SIZE_1] = {
 	{0, 0, 0, 0, 0},
 };
 
-/**
- *
- */
-int main(int argc, char ** argv) {
-	LOG("\nWelcome to the Game of Life!");
-	LOG("\n\n");
-	int i, j;
-	uint16_t sz, numIterations;
+int parseFile_Large(char * file, uint16_t * psz) {
+	printf("\nparseFile");
 
-	if (argc < 3) {
-		printf("\nRun program in this format: ./a.out test_file num_iterations");
-		printf("\nEg ./a.out tc_1 2\n\n");
-		return -1;
-	}
-	printf("\nParsing game in file: %s", argv[1]);
-	numIterations = atoi(argv[2]);
+	FILE *f = fopen(file, "r");
+	uint16_t sz;
 
-	FILE *f = fopen(argv[1], "r");
 	// Read size of grid, lenght = width = size
 	fscanf(f, "%hd", &sz);
+	*psz = sz;
 	printf("\nBuild table of size %d x %d ", sz, sz);
 
 	// Allocate sufficient memory for ping and pong buffers
-	uint16_t *buff_0 = (uint16_t*)malloc(sizeof(uint16_t)*sz*sz);
-	uint16_t *buff_1 = (uint16_t*)malloc(sizeof(uint16_t)*sz*sz);
+	buff_0 = (uint16_t*)malloc(sizeof(uint16_t)*sz*sz);
+	buff_1 = (uint16_t*)malloc(sizeof(uint16_t)*sz*sz);
+	
 	uint16_t v;
+	int i, j;
 	for (i = 0; i < sz; i++) {
 		printf("\n");
 		for (j = 0; j < sz; j++) {
@@ -271,23 +278,57 @@ int main(int argc, char ** argv) {
 		}
 	}	
 	fclose (f);
-	
+	return 0;
+close:
+	fclose(f);
+	free(buff_0);
+	free(buff_1);
+	return 1;
+}
+
+struct GameOps gameOpsLarge = {
+	.getCellState = getCellState_Large,
+	.getNeighborLiveCount = getNeighborLiveCount_Large,
+	.playGame = playGame_Large,
+	.printGameGrid = printGameGrid_Large,
+	.gameRound = gameRound_Large,
+	.processCell = processCell_Large,
+	.parseFile = parseFile_Large,
+};
+
+/**
+ *
+ */
+int main(int argc, char ** argv) {
+	LOG("\nWelcome to the Game of Life!");
+	LOG("\n\n");
+	// int i, j;
+	uint16_t sz, numIterations;
+
+	pGameOps = &gameOpsLarge;
+
+	if (argc < 3) {
+		printf("\nRun program in this format: ./a.out test_file num_iterations");
+		printf("\nEg ./a.out tc_1 2\n\n");
+		return 1;
+	}
+	printf("\nParsing game in file: %s", argv[1]);
+	numIterations = atoi(argv[2]);
+
+	if (pGameOps->parseFile(argv[1], &sz)) {
+		return 1;
+	}
+
 	printf("\n\nInitial grid");
-	printGameGrid(buff_0, sz);
+	pGameOps->printGameGrid(buff_0, sz);
 
 	printf("\n\nWill run game for %d iterations.", numIterations);
 
-	playGame(buff_0, buff_1, sz, numIterations);
+	pGameOps->playGame(buff_0, buff_1, sz, numIterations);
 
 	free(buff_0);
 	free(buff_1);
 
 	LOG("\n\n");
 	return 0;
-
-close:
-	fclose(f);
-	free(buff_0);
-	free(buff_1);
-	return 1;
 }
