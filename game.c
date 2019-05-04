@@ -5,10 +5,10 @@
 
 /**
  * Game of Life Rules
- * 		1. Any live cell with fewer than two live neighbours dies, as if caused by under-population.
- * 		2. Any live cell with two or three live neighbours lives on to the next generation.
- * 		3. Any live cell with more than three live neighbours dies, as if by overcrowding.
- * 		4. Any dead cell with exactly three live neighbours becomes a live cell, as if by reproduction.
+ * 	1. Any live cell with fewer than two live neighbours dies, as if caused by under-population.
+ * 	2. Any live cell with two or three live neighbours lives on to the next generation.
+ * 	3. Any live cell with more than three live neighbours dies, as if by overcrowding.
+ * 	4. Any dead cell with exactly three live neighbours becomes a live cell, as if by reproduction.
  */
 
 /// Define valid cell states
@@ -159,8 +159,9 @@ CellState processCell(uint16_t * g, uint16_t size, Coord * cell) {
 /**
  * Plays one round of the game, iterating over each cell of the grid.
  * 
- * @param src Square grid - array of arrays with its values either 0 or 1 (0 means dead, 1 means alive)
- * @param dst Square grid - array of arrays with its values either 0 or 1 (0 means dead, 1 means alive)
+ * @param src Square grid - array of arrays with its values either 0 or 1 (0 means dead,
+ * 1 means alive)
+ * @param dst New grid state will be stored here after the round is completed.
  * @param size Size of grid
  */
 void gameRound(uint16_t * src, uint16_t * dst, uint16_t size) {
@@ -192,7 +193,8 @@ void printGameGrid(uint16_t * g, uint16_t size) {
 /**
  * Main entry point
  * 
- * @param grid Square grid - array of arrays with its values either 0 or 1 (0 means dead, 1 means alive)
+ * @param grid Square grid - array of arrays with its values either 0 or 1 (0 means dead,
+ * 		1 means alive)
  * @param size Size of grid
  * @param iterations Number of iterations
  */
@@ -231,50 +233,61 @@ int main(int argc, char ** argv) {
 	int i, j;
 	uint16_t sz, numIterations;
 
-	printf("argc = %d", argc);
 	if (argc < 3) {
 		printf("\nRun program in this format: ./a.out test_file num_iterations");
-		printf("\nEg ./a.out tc_1 2");
-		return 0;
+		printf("\nEg ./a.out tc_1 2\n\n");
+		return -1;
 	}
 	printf("\nParsing game in file: %s", argv[1]);
 	numIterations = atoi(argv[2]);
 
 	FILE *f = fopen(argv[1], "r");
-	fscanf (f, "%hd", &sz);    
-	printf ("\nBuild table of size %d x %d ", sz, sz);
+	// Read size of grid, lenght = width = size
+	fscanf(f, "%hd", &sz);
+	printf("\nBuild table of size %d x %d ", sz, sz);
+
+	// Allocate sufficient memory for ping and pong buffers
 	uint16_t *buff_0 = (uint16_t*)malloc(sizeof(uint16_t)*sz*sz);
 	uint16_t *buff_1 = (uint16_t*)malloc(sizeof(uint16_t)*sz*sz);
+	uint16_t v;
 	for (i = 0; i < sz; i++) {
 		printf("\n");
 		for (j = 0; j < sz; j++) {
-			fscanf (f, "%hd", &buff_0[i*sz + j]);
+			if (feof(f)) {
+				printf("\nError! End of file reached before building game grid. Input file likely \
+					not formated correctly.");
+				printf("\nExpect grid dimension on first line, followed by n x n grid\n\n");
+				goto close;
+			}
+			fscanf(f, "%hd", &v);
+			if (v != 0 && v != 1) {
+				printf("\nError! Invalid Game Vallue for cell (%d,%d) = %d",
+					i, j, v);
+				printf("\nValid values are 0 or 1.\n\n");
+				goto close;
+			}
+			buff_0[i*sz + j] = v;
 			printf("%d ", buff_0[i*sz + j]);
 		}
 	}	
-	fclose (f); 
+	fclose (f);
 	
 	printf("\n\nInitial grid");
 	printGameGrid(buff_0, sz);
 
 	printf("\n\nWill run game for %d iterations.", numIterations);
 
-	uint16_t *src, *dst, *tmp;
-	src = buff_0;
-	dst = buff_1;
 	playGame(buff_0, buff_1, sz, numIterations);
-	// for (i = 0; i < numIterations; i++) {
-	// 	memset(dst, 0, sz*sz*sizeof(uint16_t));
-	// 	gameEntry(src, dst, sz, 1);
-	// 	printf("\n\nAfter round %d", i+1);
-	// 	printGameGrid(dst, sz);
-	// 	tmp = src;
-	// 	src = dst;
-	// 	dst = tmp;
-	// }
 
 	free(buff_0);
 	free(buff_1);
 
 	LOG("\n\n");
+	return 0;
+
+close:
+	fclose(f);
+	free(buff_0);
+	free(buff_1);
+	return 1;
 }
