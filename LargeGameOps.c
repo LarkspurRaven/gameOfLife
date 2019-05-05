@@ -140,7 +140,14 @@ void printGameGrid_Large(uint16_t * g, uint16_t size) {
 int parseFile_Large(char * file, uint16_t * psz) {
 	LOG("\nparseFile");
 
-	FILE *f = fopen(file, "r");
+	char dirName [50] = "./tests/";
+	if (strlen(file) + strlen(dirName) > 50) {
+		LOGW("\nFilename too long");
+		return 1;
+	}
+
+	FILE *f = fopen(strcat(dirName, file), "r");
+
 	uint16_t sz;
 
 	// Read size of grid, lenght = width = size
