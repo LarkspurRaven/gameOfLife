@@ -16,7 +16,7 @@ gcc game.c LargeGameOps.c BitfieldGameOps.c -DGAME_LARGE -o game
 -DREDUCED_LOG
 
 ## To Test One File
-./game input
+./game input 1
 
 ## To Build and Test with Test Runner
 gcc tester.c -o tester
