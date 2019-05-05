@@ -102,18 +102,18 @@ void gameRound_Bitfield(uint16_t * src, uint16_t * dst, uint16_t size) {
 }
 
 void printGameGrid_Bitfield(uint16_t * g, uint16_t size) {
-	printf("\nprintGameGrid_Bitfield, size=%d", size);
+	LOG("\nprintGameGrid_Bitfield, size=%d", size);
 	int i, j;
 	for (i = 0; i < size; i++) {
-		printf("\n");
+		LOG("\n");
 		for (j = 0; j < size; j++) {
-			printf("%d ", (g[i] & 1<<j) ? 1 : 0);
+			LOG("%d ", (g[i] & 1<<j) ? 1 : 0);
 		}
 	}
 }
 
 int parseFile_Bitfield(char * file, uint16_t * psz) {
-	printf("\nparseFile_Bitfield_0");
+	LOG("\nparseFile_Bitfield_0");
 
 	FILE *f = fopen(file, "r");
 	uint16_t sz;
@@ -121,49 +121,49 @@ int parseFile_Bitfield(char * file, uint16_t * psz) {
 	// Read size of grid, lenght = width = size
 	fscanf(f, "%hd", &sz);
 	*psz = sz;
-	printf("\nBuild table of size %d x %d ", sz, sz);
+	LOG("\nBuild table of size %d x %d ", sz, sz);
 
 	// Allocate sufficient memory for ping and pong buffers
 	buff_0 = (uint16_t*)malloc(sizeof(uint16_t)*sz);
 	buff_1 = (uint16_t*)malloc(sizeof(uint16_t)*sz);
 	
-	printf("sz(buff_0)=%lu", sizeof(buff_0));
-	printf("sz(buff_0[0])=%lu", sizeof(buff_0[0]));
+	LOG("sz(buff_0)=%lu", sizeof(buff_0));
+	LOG("sz(buff_0[0])=%lu", sizeof(buff_0[0]));
 
 	uint16_t v;
 	int i, j; // i: rows, j: columns
 	for (i = 0; i < sz; i++) {
-		printf("\n");
+		LOG("\n");
 		memset(&buff_0[i], 0, sizeof(buff_0[i]));
 		for (j = 0; j < sz; j++) {
 			if (feof(f)) {
-				printf("\nError! End of file reached before building game grid. Input file likely \
+				LOG("\nError! End of file reached before building game grid. Input file likely \
 					not formated correctly.");
-				printf("\nExpect grid dimension on first line, followed by n x n grid\n\n");
+				LOG("\nExpect grid dimension on first line, followed by n x n grid\n\n");
 				goto close;
 			}
 			fscanf(f, "%hd", &v);
 			if (v != 0 && v != 1) {
-				printf("\nError! Invalid Game Vallue for cell (%d,%d) = %d",
+				LOG("\nError! Invalid Game Vallue for cell (%d,%d) = %d",
 					i, j, v);
-				printf("\nValid values are 0 or 1.\n\n");
+				LOG("\nValid values are 0 or 1.\n\n");
 				goto close;
 			}
 			if (v == 1) {
 				buff_0[i] |= 1<<j;
 			}
 			
-			printf("%d ", v);
+			LOG("%d ", v);
 		}
 	}
 
 	printGameGrid_Bitfield(buff_0, sz);
 	// for (i = 0; i < sz; i++) {
-	// 	printf("\n0x%x ", buff_0[i]);
+	// 	LOG("\n0x%x ", buff_0[i]);
 	// }
 
 	fclose (f);
-	printf("\nparseFile_Bitfield_End");
+	LOG("\nparseFile_Bitfield_End");
 	return 0;
 close:
 	fclose(f);

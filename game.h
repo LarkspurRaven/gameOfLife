@@ -1,6 +1,14 @@
 #ifndef _GAME_H
 #define _GAME_H
 
+#define LOGW(f_, ...) printf((f_), ##__VA_ARGS__)
+
+#ifdef REDUCE_LOG
+#define LOG(f_, ...)
+#else
+#define LOG(f_, ...) printf((f_), ##__VA_ARGS__)
+#endif
+
 /// Define valid cell states
 typedef enum {
 	CellState_dead,

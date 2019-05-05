@@ -13,9 +13,6 @@
  * 	4. Any dead cell with exactly three live neighbours becomes a live cell, as if by reproduction.
  */
 
-#define LOG(x) printf(x)
-//#define LOG(x)
-
 uint16_t *buff_0;
 uint16_t *buff_1;
 
@@ -70,7 +67,7 @@ void playGame(uint16_t * ping, uint16_t * pong, uint16_t size, uint16_t iteratio
 	for (i = 0; i < iterations; i++) {
 		pGameOps->clearBuff(dst, size);
 		pGameOps->gameRound(src, dst, size);
-		printf("\n\nAfter round %d", i+1);
+		LOG("\n\nAfter round %d", i+1);
 		pGameOps->printGameGrid(dst, size);
 		tmp = src;
 		src = dst;
@@ -97,33 +94,38 @@ int main(int argc, char ** argv) {
 	// int i, j;
 	uint16_t sz, numIterations;
 
-	// pGameOps = &gameOpsLarge;
-	// pGameOps = &gameOpsBitfield;
-	pGameOps = getGameOps_Large();
-	// pGameOps = getGameOps_Bitfield();
-
 	if (argc < 3) {
-		printf("\nRun program in this format: ./a.out test_file num_iterations");
-		printf("\nEg ./a.out tc_1 2\n\n");
+		LOG("\nRun program in this format: ./a.out test_file num_iterations");
+		LOG("\nEg ./a.out tc_1 2\n\n");
 		return 1;
 	}
-	printf("\nParsing game in file: %s", argv[1]);
+
+#ifdef GAME_LARGE
+	LOG("\nSetting up Large Game");
+	pGameOps = getGameOps_Large();
+#else
+	LOG("\nSetting up Bitfield Game");
+	pGameOps = getGameOps_Bitfield();
+#endif
+
+	LOG("\nParsing game in file: %s", argv[1]);
 	numIterations = atoi(argv[2]);
 
 	if (pGameOps->parseFile(argv[1], &sz)) {
 		return 1;
 	}
 
-	printf("\n\nInitial grid");
+	LOG("\n\nInitial grid");
 	pGameOps->printGameGrid(buff_0, sz);
 
-	printf("\n\nWill run game for %d iterations.", numIterations);
+	LOG("\n\nWill run game for %d iterations.", numIterations);
 
 	pGameOps->playGame(buff_0, buff_1, sz, numIterations);
 
 	free(buff_0);
 	free(buff_1);
 
-	LOG("\n\n");
+	LOGW("\n\nGAME OVER\n\n");
+
 	return 0;
 }

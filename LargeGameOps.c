@@ -126,19 +126,19 @@ void gameRound_Large(uint16_t * src, uint16_t * dst, uint16_t size) {
 }
 
 void printGameGrid_Large(uint16_t * g, uint16_t size) {
-	printf("\nprintGameGrid_Large, size=%d", size);
+	LOG("\nprintGameGrid_Large, size=%d", size);
 	uint16_t (*grid)[size] = (uint16_t (*)[size]) g;
 	int i, j;
 	for (i = 0; i < size; i++) {
-		printf("\n");
+		LOG("\n");
 		for (j = 0; j < size; j++) {
-			printf("%d ", grid[i][j]);
+			LOG("%d ", grid[i][j]);
 		}
 	}
 }
 
 int parseFile_Large(char * file, uint16_t * psz) {
-	printf("\nparseFile");
+	LOG("\nparseFile");
 
 	FILE *f = fopen(file, "r");
 	uint16_t sz;
@@ -146,7 +146,7 @@ int parseFile_Large(char * file, uint16_t * psz) {
 	// Read size of grid, lenght = width = size
 	fscanf(f, "%hd", &sz);
 	*psz = sz;
-	printf("\nBuild table of size %d x %d ", sz, sz);
+	LOG("\nBuild table of size %d x %d ", sz, sz);
 
 	// Allocate sufficient memory for ping and pong buffers
 	buff_0 = (uint16_t*)malloc(sizeof(uint16_t)*sz*sz);
@@ -155,23 +155,23 @@ int parseFile_Large(char * file, uint16_t * psz) {
 	uint16_t v;
 	int i, j;
 	for (i = 0; i < sz; i++) {
-		printf("\n");
+		LOG("\n");
 		for (j = 0; j < sz; j++) {
 			if (feof(f)) {
-				printf("\nError! End of file reached before building game grid. Input file likely \
+				LOG("\nError! End of file reached before building game grid. Input file likely \
 					not formated correctly.");
-				printf("\nExpect grid dimension on first line, followed by n x n grid\n\n");
+				LOG("\nExpect grid dimension on first line, followed by n x n grid\n\n");
 				goto close;
 			}
 			fscanf(f, "%hd", &v);
 			if (v != 0 && v != 1) {
-				printf("\nError! Invalid Game Vallue for cell (%d,%d) = %d",
+				LOG("\nError! Invalid Game Vallue for cell (%d,%d) = %d",
 					i, j, v);
-				printf("\nValid values are 0 or 1.\n\n");
+				LOG("\nValid values are 0 or 1.\n\n");
 				goto close;
 			}
 			buff_0[i*sz + j] = v;
-			printf("%d ", buff_0[i*sz + j]);
+			LOG("%d ", buff_0[i*sz + j]);
 		}
 	}	
 	fclose (f);
