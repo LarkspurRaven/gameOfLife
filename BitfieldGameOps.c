@@ -17,7 +17,7 @@ CellState getCellState_Bitfield(uint16_t * grid, uint16_t size, Coord * cell) {
  * @relates struct GameOps
  * getNeighborLiveCount function
  */
-uint16_t getNeighborLiveCount_Bitfield2(uint16_t * grid, uint16_t size, Coord * cell) {
+uint16_t getNeighborLiveCount_Bitfield(uint16_t * grid, uint16_t size, Coord * cell) {
     uint16_t liveCount = 0;
 
     int16_t x = (int16_t)cell->x; // Conversion ok for this cell representation
@@ -41,85 +41,6 @@ uint16_t getNeighborLiveCount_Bitfield2(uint16_t * grid, uint16_t size, Coord * 
             liveCount += (grid[x+dx] & 1<<(y+dy)) ? 1 : 0;
         }
     }
-    return liveCount;
-}
-
-/**
- * @relates struct GameOps
- * getNeighborLiveCount function
- */
-uint16_t getNeighborLiveCount_Bitfield(uint16_t * grid, uint16_t size, Coord * cell) {
-    uint16_t liveCount = 0;
-    uint16_t x = cell->x;
-    uint16_t y = cell->y;
-
-    // Check x-axis, left/right
-    // grid[x+/-1][y]
-    if (x == 0) {
-        liveCount += (grid[x+1] & 1<<y) ? 1 : 0;
-    } else if (x == size-1) {
-        liveCount += (grid[x-1] & 1<<y) ? 1 : 0;
-    } else {
-        liveCount += (grid[x+1] & 1<<y) ? 1 : 0;
-        liveCount += (grid[x-1] & 1<<y) ? 1 : 0;
-    }
-
-    // Check y-axis, up/down
-    // grid[x][y+/-1]
-    if (y == 0) {
-        liveCount += (grid[x] & 1<<(y+1)) ? 1 : 0;
-    } else if (y == size-1) {
-        liveCount += (grid[x] & 1<<(y-1)) ? 1 : 0;
-    } else {
-        liveCount += (grid[x] & 1<<(y+1)) ? 1 : 0;
-        liveCount += (grid[x] & 1<<(y-1)) ? 1 : 0;
-    }
-
-    // Check diagonals
-    // upper left corner
-    if (x == 0 && y == 0) {
-        liveCount += (grid[x+1] & 1<<(y+1)) ? 1 : 0;
-    }
-    // lower left corner
-    else if (x == 0 && y == size - 1) {
-        liveCount += (grid[x+1] & 1<<(y-1)) ? 1 : 0;
-    }
-    // upper right corner
-    else if (x == size -1 && y == 0) {
-        liveCount += (grid[x-1] & 1<<(y+1)) ? 1 : 0;
-    }
-    // lower right corner
-    else if (x == size -1 && y == size - 1) {
-        liveCount += (grid[x-1] & 1<<(y-1)) ? 1 : 0;
-    }
-    // left edge (no diags on left)
-    else if (x == 0) {
-        liveCount += (grid[x+1] & 1<<(y+1)) ? 1 : 0;
-        liveCount += (grid[x+1] & 1<<(y-1)) ? 1 : 0;
-    }
-    // right edge (no diags on right)
-    else if (x == size - 1) {
-        liveCount += (grid[x-1] & 1<<(y-1)) ? 1 : 0;
-        liveCount += (grid[x-1] & 1<<(y+1)) ? 1 : 0;
-    }
-    // top edge (no diags above)
-    else if (y == 0) {
-        liveCount += (grid[x-1] & 1<<(y+1)) ? 1 : 0;
-        liveCount += (grid[x+1] & 1<<(y+1)) ? 1 : 0;
-    }
-    // bottom edge (no diags below)
-    else if (y == size - 1) {
-        liveCount += (grid[x-1] & 1<<(y-1)) ? 1 : 0;
-        liveCount += (grid[x+1] & 1<<(y-1)) ? 1 : 0;
-    }
-    // no edge or corner, get all diags
-    else {
-        liveCount += (grid[x-1] & 1<<(y-1)) ? 1 : 0;
-        liveCount += (grid[x-1] & 1<<(y+1)) ? 1 : 0;
-        liveCount += (grid[x+1] & 1<<(y-1)) ? 1 : 0;
-        liveCount += (grid[x+1] & 1<<(y+1)) ? 1 : 0;
-    }
-
     return liveCount;
 }
 
@@ -237,7 +158,7 @@ void clearBuff_Bitfield(uint16_t * buff, uint16_t size) {
 
 struct GameOps gameOpsBitfield = {
     .getCellState = getCellState_Bitfield,
-    .getNeighborLiveCount = getNeighborLiveCount_Bitfield2,
+    .getNeighborLiveCount = getNeighborLiveCount_Bitfield,
     .playGame = playGame,
     .printGameGrid = printGameGrid_Bitfield,
     .gameRound = gameRound_Bitfield,
