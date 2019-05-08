@@ -17,6 +17,37 @@ CellState getCellState_Bitfield(uint16_t * grid, uint16_t size, Coord * cell) {
  * @relates struct GameOps
  * getNeighborLiveCount function
  */
+uint16_t getNeighborLiveCount_Bitfield2(uint16_t * grid, uint16_t size, Coord * cell) {
+    uint16_t liveCount = 0;
+
+    int16_t x = (int16_t)cell->x; // Conversion ok for this cell representation
+    int16_t y = (int16_t)cell->y; // Conversion ok for this cell representation
+
+    int dx, dy;
+
+    for (dx = -1; dx <= 1; dx++) {
+        for (dy = -1; dy <= 1; dy++) {
+            // Check for self
+            if (dx == 0 && dy == 0) {
+                // Ignore self, continue
+                continue;
+            }
+            // Check boundary conditions
+            if (x + dx < 0 || x + dx >= size
+                    || y + dy < 0 || y + dy >= size) {
+                // Off Grid, continue
+                continue;
+            }
+            liveCount += (grid[x+dx] & 1<<(y+dy)) ? 1 : 0;
+        }
+    }
+    return liveCount;
+}
+
+/**
+ * @relates struct GameOps
+ * getNeighborLiveCount function
+ */
 uint16_t getNeighborLiveCount_Bitfield(uint16_t * grid, uint16_t size, Coord * cell) {
     uint16_t liveCount = 0;
     uint16_t x = cell->x;
@@ -206,7 +237,7 @@ void clearBuff_Bitfield(uint16_t * buff, uint16_t size) {
 
 struct GameOps gameOpsBitfield = {
     .getCellState = getCellState_Bitfield,
-    .getNeighborLiveCount = getNeighborLiveCount_Bitfield,
+    .getNeighborLiveCount = getNeighborLiveCount_Bitfield2,
     .playGame = playGame,
     .printGameGrid = printGameGrid_Bitfield,
     .gameRound = gameRound_Bitfield,

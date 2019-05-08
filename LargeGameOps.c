@@ -18,6 +18,37 @@ CellState getCellState_Large(uint16_t * g, uint16_t size, Coord * cell) {
  * @relates struct GameOps
  * getNeighborLiveCount function
  */
+uint16_t getNeighborLiveCount_Large2(uint16_t * g, uint16_t size, Coord * cell) {
+    uint16_t (*grid)[size] = (uint16_t (*)[size]) g;
+    uint16_t liveCount = 0;
+    int16_t x = (int16_t)cell->x; // Conversion ok for this cell representation
+    int16_t y = (int16_t)cell->y; // Conversion ok for this cell representation
+
+    int dx, dy;
+
+    for (dx = -1; dx <= 1; dx++) {
+        for (dy = -1; dy <= 1; dy++) {
+            // Check for self
+            if (dx == 0 && dy == 0) {
+                // Ignore self, continue
+                continue;
+            }
+            // Check boundary conditions
+            if (x + dx < 0 || x + dx >= size
+                    || y + dy < 0 || y + dy >= size) {
+                // Off Grid, continue
+                continue;
+            }
+            liveCount += grid[x+dx][y+dy];
+        }
+    }
+    return liveCount;
+}
+
+/**
+ * @relates struct GameOps
+ * getNeighborLiveCount function
+ */
 uint16_t getNeighborLiveCount_Large(uint16_t * g, uint16_t size, Coord * cell) {
     uint16_t (*grid)[size] = (uint16_t (*)[size]) g;
     uint16_t liveCount = 0;
@@ -196,7 +227,7 @@ void clearBuff_Large(uint16_t * buff, uint16_t size) {
 
 struct GameOps gameOpsLarge = {
     .getCellState = getCellState_Large,
-    .getNeighborLiveCount = getNeighborLiveCount_Large,
+    .getNeighborLiveCount = getNeighborLiveCount_Large2,
     .playGame = playGame,
     .printGameGrid = printGameGrid_Large,
     .gameRound = gameRound_Large,
